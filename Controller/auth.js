@@ -3,22 +3,6 @@ const User = require("../model/user");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-const getUser = async (request, response) => {
-  const token = request?.headers?.token;
-  if (!token) {
-    return response.status(400).json({ message: "Invalid token" });
-  }
-  try {
-    const data = await jwt.decode(token, process.env.ACCESS_TOKEN_KEY);
-    response.status(200).json(data);
-  } catch (error) {
-    console.log(error);
-    response.status(404).json({
-      message: "Invalid token",
-    });
-  }
-};
-
 const register = async (request, response) => {
   const { email, password } = request.body;
   const salt = await bcrypt.genSalt(10);
@@ -37,10 +21,15 @@ const register = async (request, response) => {
 
 const login = async (request, response) => {
   const { email, password } = request.body;
-
+  console.log(email);
   const user = await User.findOne({ email });
   const match = await bcrypt.compare(password, user.password);
 
+  if (!user) {
+    return response.status(404).json({
+      message: "not found",
+    });
+  }
   if (match) {
     const token = jwt.sign(
       {
@@ -56,6 +45,22 @@ const login = async (request, response) => {
   } else {
     response.status(401).json({
       message: "failed",
+    });
+  }
+};
+
+const getUser = async (request, response) => {
+  const token = request?.headers?.token;
+  if (!token) {
+    return response.status(400).json({ message: "Invalid token" });
+  }
+  try {
+    const data = await jwt.decode(token, process.env.ACCESS_TOKEN_KEY);
+    response.status(200).json(data);
+  } catch (error) {
+    console.log(error);
+    response.status(404).json({
+      message: "Invalid token",
     });
   }
 };
